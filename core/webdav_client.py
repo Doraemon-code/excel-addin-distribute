@@ -16,7 +16,7 @@ from utils.config import config
 class WebDAVClient:
     """WebDAV 客户端封装类"""
 
-    def __init__(self, url: str, username: str, password: str):
+    def __init__(self, url: str, username: str, password: str, folder: str = ""):
         """
         初始化 WebDAV 客户端
 
@@ -24,6 +24,7 @@ class WebDAVClient:
             url: WebDAV 服务器地址
             username: 用户名
             password: 密码
+            folder: 文件夹名称（可选）
         """
         self.options = {
             'webdav_hostname': url,
@@ -31,6 +32,21 @@ class WebDAVClient:
             'webdav_password': password
         }
         self.client = Client(self.options)
+        self.folder = folder.rstrip('/') if folder else ""
+
+    def _get_remote_path(self, filename: str) -> str:
+        """
+        获取完整的远程文件路径
+
+        Args:
+            filename: 文件名
+
+        Returns:
+            str: 完整路径
+        """
+        if self.folder:
+            return f"/{self.folder}/{filename}"
+        return f"/{filename}"
 
     def test_connection(self) -> Tuple[bool, str]:
         """
@@ -40,8 +56,9 @@ class WebDAVClient:
             tuple: (成功与否, 错误信息)
         """
         try:
-            # 尝试列出根目录
-            self.client.list('/')
+            # 尝试列出指定文件夹
+            path = f"/{self.folder}" if self.folder else "/"
+            self.client.list(path)
             return True, "连接成功"
         except Exception as e:
             return False, str(e)
@@ -61,8 +78,9 @@ class WebDAVClient:
         Returns:
             bytes: 文件二进制内容
         """
+        remote_path = self._get_remote_path(remote_filename)
         buffer = BytesIO()
-        self.client.download_from(buffer, remote_filename)
+        self.client.download_from(buffer, remote_path)
         return buffer.getvalue()
 
     def get_version_info(self) -> dict:
@@ -104,7 +122,8 @@ class WebDAVClient:
             int: 文件大小（字节），失败返回 -1
         """
         try:
-            info = self.client.info(remote_filename)
+            remote_path = self._get_remote_path(remote_filename)
+            info = self.client.info(remote_path)
             return int(info.get('size', 0))
         except Exception:
             return -1

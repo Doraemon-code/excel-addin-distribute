@@ -231,6 +231,7 @@ class RemoteInstallTab(ctk.CTkFrame):
         url = self.url_entry.get().strip()
         user = self.user_entry.get().strip()
         password = self.pass_entry.get()
+        folder = config.WEBDAV_DEFAULT_FOLDER
 
         if not url:
             self.status_label.configure(text="❌ 请输入服务器地址", text_color="red")
@@ -241,7 +242,7 @@ class RemoteInstallTab(ctk.CTkFrame):
 
         def test():
             try:
-                client = WebDAVClient(url, user, password)
+                client = WebDAVClient(url, user, password, folder)
                 success, msg = client.test_connection()
 
                 if success:
@@ -274,6 +275,7 @@ class RemoteInstallTab(ctk.CTkFrame):
         url = self.url_entry.get().strip()
         user = self.user_entry.get().strip()
         password = self.pass_entry.get()
+        folder = config.WEBDAV_DEFAULT_FOLDER
 
         if not url:
             self.log("❌ 请输入服务器地址")
@@ -284,7 +286,7 @@ class RemoteInstallTab(ctk.CTkFrame):
 
         def check():
             try:
-                client = WebDAVClient(url, user, password)
+                client = WebDAVClient(url, user, password, folder)
                 self.webdav_client = client
 
                 # 获取远程版本

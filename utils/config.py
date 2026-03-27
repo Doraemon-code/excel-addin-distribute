@@ -2,26 +2,43 @@
 """
 配置加载模块
 从 config.yaml 加载配置并提供全局访问
+支持 PyInstaller 打包后读取内嵌的配置文件
 """
 
 import os
+import sys
 from pathlib import Path
 from typing import Any, Optional
 
 import yaml
 
 
-# 配置文件路径（项目根目录）
+# 配置文件路径
 _CONFIG_FILE: Optional[Path] = None
 _config: dict = {}
+
+
+def get_base_path() -> Path:
+    """
+    获取基础路径
+    - 开发环境：项目根目录
+    - 打包后：exe 所在目录或 PyInstaller 临时目录
+    """
+    if getattr(sys, 'frozen', False):
+        # PyInstaller 打包后
+        # sys._MEIPASS 是 PyInstaller 解压的临时目录
+        # sys.executable 是 exe 文件路径
+        return Path(sys._MEIPASS)
+    else:
+        # 开发环境
+        return Path(__file__).parent.parent
 
 
 def get_config_path() -> Path:
     """获取配置文件路径"""
     global _CONFIG_FILE
     if _CONFIG_FILE is None:
-        # 项目根目录
-        _CONFIG_FILE = Path(__file__).parent.parent / "config.yaml"
+        _CONFIG_FILE = get_base_path() / "config.yaml"
     return _CONFIG_FILE
 
 
@@ -75,6 +92,9 @@ def _get_webdav_user() -> str:
 def _get_webdav_pass() -> str:
     return get("webdav_default_pass", "")
 
+def _get_webdav_folder() -> str:
+    return get("webdav_default_folder", "")
+
 
 # 导出配置常量（延迟加载）
 class Config:
@@ -115,6 +135,10 @@ class Config:
     @property
     def WEBDAV_DEFAULT_PASS(self) -> str:
         return _get_webdav_pass()
+
+    @property
+    def WEBDAV_DEFAULT_FOLDER(self) -> str:
+        return _get_webdav_folder()
 
     @property
     def ADDIN_DIR(self) -> Path:

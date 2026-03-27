@@ -36,8 +36,14 @@ python main.py
 ## 打包命令
 
 ```bash
-pyinstaller --onefile --windowed --name ExcelAddinInstaller --icon app.ico main.py
+pyinstaller --onefile --windowed \
+  --name ExcelAddinInstaller \
+  --icon app.ico \
+  --add-data "config.yaml;." \
+  main.py
 ```
+
+打包后 config.yaml 会内嵌在 exe 中，用户无法直接查看默认的 WebDAV 配置信息。
 
 ## 配置说明
 
@@ -45,9 +51,10 @@ pyinstaller --onefile --windowed --name ExcelAddinInstaller --icon app.ico main.
 
 | 配置项 | 说明 | 默认值 |
 |--------|------|--------|
-| webdav_default_url | WebDAV 服务器地址 | 空（用户填写） |
-| webdav_default_user | WebDAV 用户名 | 空 |
-| webdav_default_pass | WebDAV 密码 | 空 |
+| webdav_default_url | WebDAV 服务器地址 | 内嵌配置 |
+| webdav_default_user | WebDAV 用户名 | 内嵌配置 |
+| webdav_default_pass | WebDAV 密码 | 内嵌配置 |
+| webdav_default_folder | WebDAV 文件夹名称 | Addin |
 | xlam_filename | 加载项文件名 | MyAddin.xlam |
 | version_filename | 版本信息文件名 | version.json |
 | app_title | 应用标题 | Excel 加载项安装工具 |

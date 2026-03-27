@@ -1,10 +1,12 @@
 # 应用配置文件
 # 所有硬编码配置值统一放在此文件
+# 打包后此文件内嵌在 exe 中，用户无法直接查看
 
-# WebDAV 默认配置（预留给用户填写，默认为空）
-webdav_default_url: ""
-webdav_default_user: ""
-webdav_default_pass: ""
+# WebDAV 默认配置
+webdav_default_url: "https://gima.teracloud.jp/dav/"
+webdav_default_user: "Dora_emon"
+webdav_default_pass: "Zj4vTQgVwi9EtGMm"
+webdav_default_folder: "Addin"
 
 # 加载项配置
 xlam_filename: "MyAddin.xlam"
