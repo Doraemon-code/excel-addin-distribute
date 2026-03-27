@@ -83,6 +83,18 @@ def _get_window_width() -> int:
 def _get_window_height() -> int:
     return get("window_height", 560)
 
+def _get_window_min_width() -> int:
+    return get("window_min_width", 600)
+
+def _get_window_min_height() -> int:
+    return get("window_min_height", 500)
+
+def _get_font_family() -> str:
+    return get("font_family", "Microsoft YaHei UI")
+
+def _get_font_mono() -> str:
+    return get("font_mono", "Consolas")
+
 def _get_webdav_url() -> str:
     return get("webdav_default_url", "")
 
@@ -123,6 +135,22 @@ class Config:
     @property
     def WINDOW_HEIGHT(self) -> int:
         return _get_window_height()
+
+    @property
+    def WINDOW_MIN_WIDTH(self) -> int:
+        return _get_window_min_width()
+
+    @property
+    def WINDOW_MIN_HEIGHT(self) -> int:
+        return _get_window_min_height()
+
+    @property
+    def FONT_FAMILY(self) -> str:
+        return _get_font_family()
+
+    @property
+    def FONT_MONO(self) -> str:
+        return _get_font_mono()
 
     @property
     def WEBDAV_DEFAULT_URL(self) -> str:

@@ -13,7 +13,6 @@ import customtkinter as ctk
 
 from utils.config import config
 from core.webdav_client import WebDAVClient
-from core.version import is_newer, read_local_version, read_remote_version
 
 
 class RemoteInstallTab(ctk.CTkFrame):
@@ -23,7 +22,8 @@ class RemoteInstallTab(ctk.CTkFrame):
         self,
         master,
         log_callback: Callable[[str], None],
-        install_callback: Callable[[bytes, Optional[dict]], None]
+        install_callback: Callable[[bytes, Optional[dict]], None],
+        version_update_callback: Callable[[], None]
     ):
         """
         初始化远程安装 Tab
@@ -32,11 +32,12 @@ class RemoteInstallTab(ctk.CTkFrame):
             master: 父组件
             log_callback: 日志回调函数
             install_callback: 安装回调函数，接收 (文件二进制内容, 版本信息)
+            version_update_callback: 版本更新回调
         """
         super().__init__(master)
 
-        self.log = log_callback
         self.install = install_callback
+        self._version_update = version_update_callback
         self.webdav_client: Optional[WebDAVClient] = None
         self.remote_version_info: Optional[dict] = None
 
@@ -45,133 +46,59 @@ class RemoteInstallTab(ctk.CTkFrame):
 
     def _create_widgets(self):
         """创建界面组件"""
+        # 使用 grid 布局确保按钮常驻
+        self.grid_rowconfigure(0, weight=0)  # 配置区
+        self.grid_rowconfigure(1, weight=1)  # 日志区（可伸缩）
+        self.grid_rowconfigure(2, weight=0)  # 操作区（固定）
+        self.grid_columnconfigure(0, weight=1)
+
         # WebDAV 配置区
         self.config_frame = ctk.CTkFrame(self)
-        self.config_frame.pack(fill="x", padx=20, pady=10)
+        self.config_frame.grid(row=0, column=0, sticky="ew", padx=15, pady=(10, 5))
 
-        # 标题
-        self.config_title = ctk.CTkLabel(
-            self.config_frame,
-            text="WebDAV 配置",
-            font=("", 14, "bold")
-        )
-        self.config_title.pack(anchor="w", padx=10, pady=(10, 5))
+        # 配置输入（紧凑布局）
+        config_grid = ctk.CTkFrame(self.config_frame, fg_color="transparent")
+        config_grid.pack(fill="x", padx=10, pady=10)
 
-        # 地址输入
-        self.url_label = ctk.CTkLabel(self.config_frame, text="服务器地址：")
-        self.url_label.pack(anchor="w", padx=10)
-        self.url_entry = ctk.CTkEntry(
-            self.config_frame,
-            placeholder_text="https://your-server/dav/",
-            show="*"
-        )
-        self.url_entry.pack(fill="x", padx=10, pady=(0, 5))
+        # 服务器地址
+        ctk.CTkLabel(config_grid, text="服务器:", font=(config.FONT_FAMILY, 11)).grid(row=0, column=0, sticky="w", pady=2)
+        self.url_entry = ctk.CTkEntry(config_grid, show="*", width=280)
+        self.url_entry.grid(row=0, column=1, padx=(5, 10), pady=2, sticky="ew")
 
-        # 用户名输入
-        self.user_label = ctk.CTkLabel(self.config_frame, text="用户名：")
-        self.user_label.pack(anchor="w", padx=10)
-        self.user_entry = ctk.CTkEntry(self.config_frame, show="*")
-        self.user_entry.pack(fill="x", padx=10, pady=(0, 5))
+        # 用户名
+        ctk.CTkLabel(config_grid, text="用户名:", font=(config.FONT_FAMILY, 11)).grid(row=1, column=0, sticky="w", pady=2)
+        self.user_entry = ctk.CTkEntry(config_grid, show="*", width=280)
+        self.user_entry.grid(row=1, column=1, padx=(5, 10), pady=2, sticky="ew")
 
-        # 密码输入
-        self.pass_label = ctk.CTkLabel(self.config_frame, text="密码：")
-        self.pass_label.pack(anchor="w", padx=10)
-        self.pass_entry = ctk.CTkEntry(self.config_frame, show="*")
-        self.pass_entry.pack(fill="x", padx=10, pady=(0, 10))
+        # 密码
+        ctk.CTkLabel(config_grid, text="密码:", font=(config.FONT_FAMILY, 11)).grid(row=2, column=0, sticky="w", pady=2)
+        self.pass_entry = ctk.CTkEntry(config_grid, show="*", width=280)
+        self.pass_entry.grid(row=2, column=1, padx=(5, 10), pady=2, sticky="ew")
 
-        # 配置按钮区
-        self.config_btn_frame = ctk.CTkFrame(self.config_frame, fg_color="transparent")
-        self.config_btn_frame.pack(fill="x", padx=10, pady=(0, 10))
+        config_grid.columnconfigure(1, weight=1)
+
+        # 配置按钮
+        btn_frame = ctk.CTkFrame(self.config_frame, fg_color="transparent")
+        btn_frame.pack(fill="x", padx=10, pady=(0, 10))
 
         self.save_btn = ctk.CTkButton(
-            self.config_btn_frame,
-            text="💾 保存配置",
-            width=100,
-            command=self._on_save_config
+            btn_frame, text="💾 保存", width=80, height=28,
+            font=(config.FONT_FAMILY, 11), command=self._on_save_config
         )
-        self.save_btn.pack(side="left", padx=(0, 10))
+        self.save_btn.pack(side="left", padx=(0, 5))
 
         self.test_btn = ctk.CTkButton(
-            self.config_btn_frame,
-            text="🔗 测试连接",
-            width=100,
-            command=self._on_test_connection
+            btn_frame, text="🔗 测试", width=80, height=28,
+            font=(config.FONT_FAMILY, 11), command=self._on_test_connection
         )
         self.test_btn.pack(side="left")
 
-        # 连接状态标签
-        self.status_label = ctk.CTkLabel(
-            self.config_frame,
-            text="",
-            text_color="gray"
-        )
-        self.status_label.pack(anchor="w", padx=10, pady=(0, 10))
+        self.status_label = ctk.CTkLabel(btn_frame, text="", text_color="gray", font=(config.FONT_FAMILY, 11))
+        self.status_label.pack(side="left", padx=10)
 
-        # 版本信息区
-        self.version_frame = ctk.CTkFrame(self)
-        self.version_frame.pack(fill="x", padx=20, pady=10)
-
-        self.version_title = ctk.CTkLabel(
-            self.version_frame,
-            text="版本信息",
-            font=("", 14, "bold")
-        )
-        self.version_title.pack(anchor="w", padx=10, pady=(10, 5))
-
-        # 版本显示
-        self.version_info_frame = ctk.CTkFrame(self.version_frame, fg_color="transparent")
-        self.version_info_frame.pack(fill="x", padx=10, pady=(0, 10))
-
-        # 远程版本
-        self.remote_ver_label = ctk.CTkLabel(
-            self.version_info_frame,
-            text="远程版本：未检查"
-        )
-        self.remote_ver_label.pack(anchor="w")
-
-        # 远程发布日期
-        self.remote_date_label = ctk.CTkLabel(
-            self.version_info_frame,
-            text="发布日期：",
-            text_color="gray"
-        )
-        self.remote_date_label.pack(anchor="w")
-
-        # 本地版本
-        self.local_ver_label = ctk.CTkLabel(
-            self.version_info_frame,
-            text="本地版本：未安装"
-        )
-        self.local_ver_label.pack(anchor="w", pady=(10, 0))
-
-        # 本地发布日期
-        self.local_date_label = ctk.CTkLabel(
-            self.version_info_frame,
-            text="安装日期：",
-            text_color="gray"
-        )
-        self.local_date_label.pack(anchor="w")
-
-        # 更新日志
-        self.changelog_label = ctk.CTkLabel(
-            self.version_info_frame,
-            text="更新日志：",
-            wraplength=600
-        )
-        self.changelog_label.pack(anchor="w", pady=(10, 0))
-
-        # 检查更新按钮
-        self.check_btn = ctk.CTkButton(
-            self.version_frame,
-            text="🔍 检查更新",
-            width=120,
-            command=self._on_check_update
-        )
-        self.check_btn.pack(anchor="w", padx=10, pady=(0, 10))
-
-        # 操作区
+        # 操作区（固定在底部）
         self.action_frame = ctk.CTkFrame(self)
-        self.action_frame.pack(fill="x", padx=20, pady=10)
+        self.action_frame.grid(row=2, column=0, sticky="ew", padx=15, pady=(5, 10))
 
         # 进度条
         self.progress = ctk.CTkProgressBar(self.action_frame)
@@ -183,11 +110,36 @@ class RemoteInstallTab(ctk.CTkFrame):
             self.action_frame,
             text="⬇️ 一键安装 / 更新",
             width=200,
-            height=40,
-            font=("", 16),
+            height=36,
+            font=(config.FONT_FAMILY, 14),
             command=self._on_install
         )
         self.install_btn.pack(pady=(0, 10))
+
+        # 日志区（中间可伸缩）
+        self.log_frame = ctk.CTkFrame(self)
+        self.log_frame.grid(row=1, column=0, sticky="nsew", padx=15, pady=5)
+
+        self.log_label = ctk.CTkLabel(
+            self.log_frame, text="操作日志",
+            font=(config.FONT_FAMILY, 11, "bold")
+        )
+        self.log_label.pack(anchor="w", padx=10, pady=(5, 0))
+
+        self.log_text = ctk.CTkTextbox(
+            self.log_frame,
+            state="disabled",
+            font=(config.FONT_MONO, 10),
+            height=60  # 最小高度
+        )
+        self.log_text.pack(fill="both", expand=True, padx=10, pady=5)
+
+    def _log(self, message: str):
+        """输出日志"""
+        self.log_text.configure(state="normal")
+        self.log_text.insert("end", message + "\n")
+        self.log_text.see("end")
+        self.log_text.configure(state="disabled")
 
     def _load_user_config(self):
         """加载用户配置"""
@@ -196,7 +148,6 @@ class RemoteInstallTab(ctk.CTkFrame):
                 with open(config.USER_CONFIG_FILE, "r", encoding="utf-8") as f:
                     saved_config = json.load(f)
 
-                # 填充配置
                 if saved_config.get("webdav_url"):
                     self.url_entry.insert(0, saved_config["webdav_url"])
                 elif config.WEBDAV_DEFAULT_URL:
@@ -215,16 +166,12 @@ class RemoteInstallTab(ctk.CTkFrame):
             except Exception:
                 pass
         else:
-            # 使用默认配置
             if config.WEBDAV_DEFAULT_URL:
                 self.url_entry.insert(0, config.WEBDAV_DEFAULT_URL)
             if config.WEBDAV_DEFAULT_USER:
                 self.user_entry.insert(0, config.WEBDAV_DEFAULT_USER)
             if config.WEBDAV_DEFAULT_PASS:
                 self.pass_entry.insert(0, config.WEBDAV_DEFAULT_PASS)
-
-        # 更新本地版本显示
-        self._update_local_version()
 
     def _save_user_config(self):
         """保存用户配置"""
@@ -241,7 +188,7 @@ class RemoteInstallTab(ctk.CTkFrame):
     def _on_save_config(self):
         """保存配置按钮点击"""
         self._save_user_config()
-        self.status_label.configure(text="✅ 配置已保存", text_color="green")
+        self.status_label.configure(text="✅ 已保存", text_color="green")
 
     def _on_test_connection(self):
         """测试连接按钮点击"""
@@ -251,11 +198,11 @@ class RemoteInstallTab(ctk.CTkFrame):
         folder = config.WEBDAV_DEFAULT_FOLDER
 
         if not url:
-            self.status_label.configure(text="❌ 请输入服务器地址", text_color="red")
+            self.status_label.configure(text="❌ 请输入地址", text_color="red")
             return
 
         self.test_btn.configure(state="disabled")
-        self.status_label.configure(text="正在连接...", text_color="gray")
+        self.status_label.configure(text="连接中...", text_color="gray")
 
         def test():
             try:
@@ -264,132 +211,45 @@ class RemoteInstallTab(ctk.CTkFrame):
 
                 if success:
                     self.webdav_client = client
-                    self.after(0, lambda: self.status_label.configure(
-                        text="✅ 连接成功", text_color="green"
-                    ))
+                    self.after(0, lambda: self.status_label.configure(text="✅ 连接成功", text_color="green"))
                 else:
-                    self.after(0, lambda: self.status_label.configure(
-                        text=f"❌ 连接失败：{msg}", text_color="red"
-                    ))
+                    self.after(0, lambda: self.status_label.configure(text=f"❌ 失败", text_color="red"))
             except Exception as e:
-                self.after(0, lambda: self.status_label.configure(
-                    text=f"❌ 连接失败：{str(e)}", text_color="red"
-                ))
+                self.after(0, lambda: self.status_label.configure(text="❌ 失败", text_color="red"))
             finally:
                 self.after(0, lambda: self.test_btn.configure(state="normal"))
 
         threading.Thread(target=test, daemon=True).start()
 
-    def _update_local_version(self):
-        """更新本地版本显示"""
-        local_info = read_local_version()
-        self.local_ver_label.configure(
-            text=f"本地版本：{local_info.get('version', '未安装')}"
-        )
-        self.local_date_label.configure(
-            text=f"安装日期：{local_info.get('releaseDate', '-')}"
-        )
-
-    def _on_check_update(self):
-        """检查更新按钮点击"""
-        url = self.url_entry.get().strip()
-        user = self.user_entry.get().strip()
-        password = self.pass_entry.get()
-        folder = config.WEBDAV_DEFAULT_FOLDER
-
-        if not url:
-            self.log("❌ 请输入服务器地址")
-            return
-
-        self.check_btn.configure(state="disabled")
-        self.log("🔍 正在检查更新...")
-
-        def check():
-            try:
-                client = WebDAVClient(url, user, password, folder)
-                self.webdav_client = client
-
-                # 获取远程版本
-                remote_info = read_remote_version(client)
-
-                if not remote_info:
-                    self.after(0, lambda: self.log("❌ 无法获取远程版本信息"))
-                    return
-
-                self.remote_version_info = remote_info
-
-                # 更新显示
-                remote_ver = remote_info.get("version", "未知")
-                remote_date = remote_info.get("releaseDate", "-")
-                changelog = remote_info.get("changelog", "无")
-
-                self.after(0, lambda: self.remote_ver_label.configure(
-                    text=f"远程版本：{remote_ver}"
-                ))
-                self.after(0, lambda: self.remote_date_label.configure(
-                    text=f"发布日期：{remote_date}"
-                ))
-                self.after(0, lambda: self.changelog_label.configure(
-                    text=f"更新日志：{changelog}"
-                ))
-
-                # 更新本地版本
-                self.after(0, self._update_local_version)
-
-                # 比较版本
-                local_info = read_local_version()
-                local_ver = local_info.get("version", "0")
-
-                if local_ver == "未安装":
-                    self.after(0, lambda: self.log(f"✅ 发现新版本：{remote_ver}（本地未安装）"))
-                elif is_newer(remote_ver, local_ver):
-                    self.after(0, lambda: self.log(f"✅ 发现新版本：{remote_ver}"))
-                else:
-                    self.after(0, lambda: self.log("✅ 已是最新版本"))
-
-            except Exception as e:
-                self.after(0, lambda: self.log(f"❌ 检查更新失败：{str(e)}"))
-            finally:
-                self.after(0, lambda: self.check_btn.configure(state="normal"))
-
-        threading.Thread(target=check, daemon=True).start()
-
     def _on_install(self):
         """安装按钮点击"""
         if not self.webdav_client:
-            self.log("❌ 请先测试连接")
+            self._log("❌ 请先测试连接")
             return
 
         self.install_btn.configure(state="disabled", text="下载中...")
         self.progress.set(0)
-        self.log("⬇️ 正在下载 xlam 文件...")
+        self._log("⬇️ 正在下载 xlam 文件...")
 
         def download():
             try:
-                # 下载文件
                 xlam_bytes = self.webdav_client.download_xlam()
                 self.after(0, lambda: self.progress.set(0.5))
-                self.after(0, lambda: self.log(f"✅ 下载完成（{len(xlam_bytes)} 字节）"))
+                self.after(0, lambda: self._log(f"✅ 下载完成（{len(xlam_bytes)} 字节）"))
 
-                # 获取版本信息
                 version_info = self.webdav_client.get_version_info()
-
                 self.after(0, lambda: self.progress.set(0.7))
 
-                # 调用安装回调
                 self.after(0, lambda: self.install(xlam_bytes, version_info))
-
                 self.after(0, lambda: self.progress.set(1))
 
             except Exception as e:
-                self.after(0, lambda: self.log(f"❌ 下载失败：{str(e)}"))
+                self.after(0, lambda: self._log(f"❌ 下载失败：{str(e)}"))
             finally:
-                self.after(0, lambda: self.install_btn.configure(
-                    state="normal", text="⬇️ 一键安装 / 更新"
-                ))
+                self.after(0, lambda: self.install_btn.configure(state="normal", text="⬇️ 一键安装 / 更新"))
 
         threading.Thread(target=download, daemon=True).start()
 
     def refresh_version(self):
         """刷新版本信息"""
-        self._update_local_version()
+        pass

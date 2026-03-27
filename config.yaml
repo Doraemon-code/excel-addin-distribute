@@ -18,4 +18,10 @@ app_version: "1.0.0"
 
 # 窗口尺寸
 window_width: 680
-window_height: 560
+window_height: 420
+window_min_width: 600
+window_min_height: 380
+
+# 字体配置
+font_family: "Microsoft YaHei UI"
+font_mono: "Consolas"
