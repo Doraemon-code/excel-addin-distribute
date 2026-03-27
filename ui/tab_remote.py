@@ -129,12 +129,28 @@ class RemoteInstallTab(ctk.CTkFrame):
         )
         self.remote_ver_label.pack(anchor="w")
 
+        # 远程发布日期
+        self.remote_date_label = ctk.CTkLabel(
+            self.version_info_frame,
+            text="发布日期：",
+            text_color="gray"
+        )
+        self.remote_date_label.pack(anchor="w")
+
         # 本地版本
         self.local_ver_label = ctk.CTkLabel(
             self.version_info_frame,
             text="本地版本：未安装"
         )
-        self.local_ver_label.pack(anchor="w")
+        self.local_ver_label.pack(anchor="w", pady=(10, 0))
+
+        # 本地发布日期
+        self.local_date_label = ctk.CTkLabel(
+            self.version_info_frame,
+            text="安装日期：",
+            text_color="gray"
+        )
+        self.local_date_label.pack(anchor="w")
 
         # 更新日志
         self.changelog_label = ctk.CTkLabel(
@@ -142,7 +158,7 @@ class RemoteInstallTab(ctk.CTkFrame):
             text="更新日志：",
             wraplength=600
         )
-        self.changelog_label.pack(anchor="w", pady=(5, 0))
+        self.changelog_label.pack(anchor="w", pady=(10, 0))
 
         # 检查更新按钮
         self.check_btn = ctk.CTkButton(
@@ -270,6 +286,9 @@ class RemoteInstallTab(ctk.CTkFrame):
         self.local_ver_label.configure(
             text=f"本地版本：{local_info.get('version', '未安装')}"
         )
+        self.local_date_label.configure(
+            text=f"安装日期：{local_info.get('releaseDate', '-')}"
+        )
 
     def _on_check_update(self):
         """检查更新按钮点击"""
@@ -301,10 +320,14 @@ class RemoteInstallTab(ctk.CTkFrame):
 
                 # 更新显示
                 remote_ver = remote_info.get("version", "未知")
+                remote_date = remote_info.get("releaseDate", "-")
                 changelog = remote_info.get("changelog", "无")
 
                 self.after(0, lambda: self.remote_ver_label.configure(
                     text=f"远程版本：{remote_ver}"
+                ))
+                self.after(0, lambda: self.remote_date_label.configure(
+                    text=f"发布日期：{remote_date}"
                 ))
                 self.after(0, lambda: self.changelog_label.configure(
                     text=f"更新日志：{changelog}"

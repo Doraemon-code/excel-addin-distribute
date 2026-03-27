@@ -34,18 +34,31 @@ def read_local_version() -> dict:
     读取本地已安装版本信息
 
     Returns:
-        dict: 版本信息字典，未安装时返回 {'version': '未安装'}
+        dict: 版本信息字典，未安装时返回默认值
     """
     local_version_path = config.ADDIN_DIR / config.VERSION_FILENAME
 
     if not local_version_path.exists():
-        return {'version': '未安装', 'changelog': ''}
+        return {
+            'version': '未安装',
+            'releaseDate': '',
+            'changelog': ''
+        }
 
     try:
         with open(local_version_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
+            data = json.load(f)
+            return {
+                'version': data.get('version', '未知'),
+                'releaseDate': data.get('releaseDate', ''),
+                'changelog': data.get('changelog', '')
+            }
     except Exception:
-        return {'version': '未知', 'changelog': ''}
+        return {
+            'version': '未知',
+            'releaseDate': '',
+            'changelog': ''
+        }
 
 
 def read_remote_version(webdav_client) -> dict:
