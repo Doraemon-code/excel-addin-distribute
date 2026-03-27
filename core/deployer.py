@@ -78,7 +78,7 @@ def register_addin(xlam_path: str, log_callback: Callable[[str], None]) -> bool:
             target_key_name,
             0,
             winreg.REG_SZ,
-            f'/R "{xlam_path}"'
+            f'"{xlam_path}"'
         )
         winreg.CloseKey(key)
 
