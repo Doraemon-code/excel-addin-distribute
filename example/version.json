@@ -1,0 +1,6 @@
+{
+  "version": "1.0.0",
+  "releaseDate": "2026-03-27",
+  "filename": "MyAddin.xlam",
+  "changelog": "初始版本：包含目录生成、格式化、汇总、正则提取等功能"
+}

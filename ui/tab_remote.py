@@ -62,14 +62,15 @@ class RemoteInstallTab(ctk.CTkFrame):
         self.url_label.pack(anchor="w", padx=10)
         self.url_entry = ctk.CTkEntry(
             self.config_frame,
-            placeholder_text="https://your-server/dav/"
+            placeholder_text="https://your-server/dav/",
+            show="*"
         )
         self.url_entry.pack(fill="x", padx=10, pady=(0, 5))
 
         # 用户名输入
         self.user_label = ctk.CTkLabel(self.config_frame, text="用户名：")
         self.user_label.pack(anchor="w", padx=10)
-        self.user_entry = ctk.CTkEntry(self.config_frame)
+        self.user_entry = ctk.CTkEntry(self.config_frame, show="*")
         self.user_entry.pack(fill="x", padx=10, pady=(0, 5))
 
         # 密码输入
