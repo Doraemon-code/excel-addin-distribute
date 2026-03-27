@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 from packaging.version import Version
 
-from config import XLAM_FILENAME, VERSION_FILENAME, ADDIN_DIR
+from utils.config import config
 
 
 def is_newer(remote_ver: str, local_ver: str) -> bool:
@@ -36,7 +36,7 @@ def read_local_version() -> dict:
     Returns:
         dict: 版本信息字典，未安装时返回 {'version': '未安装'}
     """
-    local_version_path = ADDIN_DIR / VERSION_FILENAME
+    local_version_path = config.ADDIN_DIR / config.VERSION_FILENAME
 
     if not local_version_path.exists():
         return {'version': '未安装', 'changelog': ''}
@@ -75,7 +75,7 @@ def save_local_version(version_info: dict) -> bool:
     Returns:
         bool: 是否保存成功
     """
-    local_version_path = ADDIN_DIR / VERSION_FILENAME
+    local_version_path = config.ADDIN_DIR / config.VERSION_FILENAME
 
     try:
         os.makedirs(local_version_path.parent, exist_ok=True)

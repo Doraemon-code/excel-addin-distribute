@@ -11,10 +11,7 @@ from typing import Callable, Optional
 
 import customtkinter as ctk
 
-from config import (
-    WEBDAV_DEFAULT_URL, WEBDAV_DEFAULT_USER, WEBDAV_DEFAULT_PASS,
-    USER_CONFIG_DIR, USER_CONFIG_FILE
-)
+from utils.config import config
 from core.webdav_client import WebDAVClient
 from core.version import is_newer, read_local_version, read_remote_version
 
@@ -177,52 +174,52 @@ class RemoteInstallTab(ctk.CTkFrame):
 
     def _load_user_config(self):
         """加载用户配置"""
-        if USER_CONFIG_FILE.exists():
+        if config.USER_CONFIG_FILE.exists():
             try:
-                with open(USER_CONFIG_FILE, "r", encoding="utf-8") as f:
-                    config = json.load(f)
+                with open(config.USER_CONFIG_FILE, "r", encoding="utf-8") as f:
+                    saved_config = json.load(f)
 
                 # 填充配置
-                if config.get("webdav_url"):
-                    self.url_entry.insert(0, config["webdav_url"])
-                elif WEBDAV_DEFAULT_URL:
-                    self.url_entry.insert(0, WEBDAV_DEFAULT_URL)
+                if saved_config.get("webdav_url"):
+                    self.url_entry.insert(0, saved_config["webdav_url"])
+                elif config.WEBDAV_DEFAULT_URL:
+                    self.url_entry.insert(0, config.WEBDAV_DEFAULT_URL)
 
-                if config.get("webdav_user"):
-                    self.user_entry.insert(0, config["webdav_user"])
-                elif WEBDAV_DEFAULT_USER:
-                    self.user_entry.insert(0, WEBDAV_DEFAULT_USER)
+                if saved_config.get("webdav_user"):
+                    self.user_entry.insert(0, saved_config["webdav_user"])
+                elif config.WEBDAV_DEFAULT_USER:
+                    self.user_entry.insert(0, config.WEBDAV_DEFAULT_USER)
 
-                if config.get("webdav_pass"):
-                    self.pass_entry.insert(0, config["webdav_pass"])
-                elif WEBDAV_DEFAULT_PASS:
-                    self.pass_entry.insert(0, WEBDAV_DEFAULT_PASS)
+                if saved_config.get("webdav_pass"):
+                    self.pass_entry.insert(0, saved_config["webdav_pass"])
+                elif config.WEBDAV_DEFAULT_PASS:
+                    self.pass_entry.insert(0, config.WEBDAV_DEFAULT_PASS)
 
             except Exception:
                 pass
         else:
             # 使用默认配置
-            if WEBDAV_DEFAULT_URL:
-                self.url_entry.insert(0, WEBDAV_DEFAULT_URL)
-            if WEBDAV_DEFAULT_USER:
-                self.user_entry.insert(0, WEBDAV_DEFAULT_USER)
-            if WEBDAV_DEFAULT_PASS:
-                self.pass_entry.insert(0, WEBDAV_DEFAULT_PASS)
+            if config.WEBDAV_DEFAULT_URL:
+                self.url_entry.insert(0, config.WEBDAV_DEFAULT_URL)
+            if config.WEBDAV_DEFAULT_USER:
+                self.user_entry.insert(0, config.WEBDAV_DEFAULT_USER)
+            if config.WEBDAV_DEFAULT_PASS:
+                self.pass_entry.insert(0, config.WEBDAV_DEFAULT_PASS)
 
         # 更新本地版本显示
         self._update_local_version()
 
     def _save_user_config(self):
         """保存用户配置"""
-        config = {
+        saved_config = {
             "webdav_url": self.url_entry.get(),
             "webdav_user": self.user_entry.get(),
             "webdav_pass": self.pass_entry.get()
         }
 
-        USER_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-        with open(USER_CONFIG_FILE, "w", encoding="utf-8") as f:
-            json.dump(config, f, ensure_ascii=False, indent=2)
+        config.USER_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        with open(config.USER_CONFIG_FILE, "w", encoding="utf-8") as f:
+            json.dump(saved_config, f, ensure_ascii=False, indent=2)
 
     def _on_save_config(self):
         """保存配置按钮点击"""

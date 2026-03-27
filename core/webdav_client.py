@@ -10,7 +10,7 @@ from typing import Callable, Optional, Tuple
 
 from webdav3.client import Client
 
-from config import XLAM_FILENAME, VERSION_FILENAME
+from utils.config import config
 
 
 class WebDAVClient:
@@ -73,7 +73,7 @@ class WebDAVClient:
             dict: 版本信息字典，失败时返回 None
         """
         try:
-            content = self.download_file(VERSION_FILENAME)
+            content = self.download_file(config.VERSION_FILENAME)
             return json.loads(content.decode('utf-8'))
         except Exception:
             return None
@@ -91,7 +91,7 @@ class WebDAVClient:
         Returns:
             bytes: xlam 文件二进制内容
         """
-        return self.download_file(XLAM_FILENAME, progress_callback)
+        return self.download_file(config.XLAM_FILENAME, progress_callback)
 
     def get_file_size(self, remote_filename: str) -> int:
         """

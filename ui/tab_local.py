@@ -8,8 +8,6 @@ import customtkinter as ctk
 from tkinter import filedialog
 from typing import Callable
 
-from config import XLAM_FILENAME
-
 
 class LocalInstallTab(ctk.CTkFrame):
     """本地安装 Tab 页面"""

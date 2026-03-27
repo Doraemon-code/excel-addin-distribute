@@ -9,7 +9,7 @@ from typing import Optional
 
 import customtkinter as ctk
 
-from config import APP_TITLE, APP_VERSION, WINDOW_WIDTH, WINDOW_HEIGHT
+from utils.config import config
 from core.deployer import deploy, get_installed_version
 from ui.tab_remote import RemoteInstallTab
 from ui.tab_local import LocalInstallTab
@@ -22,8 +22,8 @@ class App(ctk.CTk):
         super().__init__()
 
         # 窗口配置
-        self.title(f"{APP_TITLE} v{APP_VERSION}")
-        self.geometry(f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}")
+        self.title(f"{config.APP_TITLE} v{config.APP_VERSION}")
+        self.geometry(f"{config.WINDOW_WIDTH}x{config.WINDOW_HEIGHT}")
         self.resizable(False, False)
 
         # 设置主题
@@ -41,7 +41,7 @@ class App(ctk.CTk):
 
         self.title_label = ctk.CTkLabel(
             self.header_frame,
-            text=APP_TITLE,
+            text=config.APP_TITLE,
             font=("", 18, "bold")
         )
         self.title_label.pack(side="left", padx=10, pady=10)

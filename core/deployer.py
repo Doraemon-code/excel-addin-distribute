@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable, Optional
 
-from config import XLAM_FILENAME, ADDIN_DIR, TARGET_PATH, VERSION_FILENAME
+from utils.config import config
 
 
 def get_office_version() -> str:
@@ -64,7 +64,7 @@ def register_addin(xlam_path: str, log_callback: Callable[[str], None]) -> bool:
             name = "OPEN" if i == 0 else f"OPEN{i}"
             try:
                 val, _ = winreg.QueryValueEx(key, name)
-                if XLAM_FILENAME in str(val):
+                if config.XLAM_FILENAME in str(val):
                     target_key_name = name  # 复用已有键
                     break
                 i += 1
@@ -108,28 +108,28 @@ def deploy(
     """
     try:
         # 步骤 1：确保目标目录存在
-        os.makedirs(ADDIN_DIR, exist_ok=True)
-        log_callback(f"📁 目标目录：{ADDIN_DIR}")
+        os.makedirs(config.ADDIN_DIR, exist_ok=True)
+        log_callback(f"📁 目标目录：{config.ADDIN_DIR}")
 
         # 步骤 2：备份原文件
-        if TARGET_PATH.exists():
+        if config.TARGET_PATH.exists():
             ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-            backup_path = Path(str(TARGET_PATH) + f".bak_{ts}")
-            shutil.copy2(TARGET_PATH, backup_path)
+            backup_path = Path(str(config.TARGET_PATH) + f".bak_{ts}")
+            shutil.copy2(config.TARGET_PATH, backup_path)
             log_callback(f"💾 已备份原文件：{backup_path.name}")
 
         # 步骤 3：写入新文件
-        with open(TARGET_PATH, "wb") as f:
+        with open(config.TARGET_PATH, "wb") as f:
             f.write(xlam_bytes)
         log_callback("✅ xlam 文件已保存至目标路径")
 
         # 步骤 4：写注册表
-        if not register_addin(str(TARGET_PATH), log_callback):
+        if not register_addin(str(config.TARGET_PATH), log_callback):
             return False
 
         # 步骤 5：保存本地 version.json
         if version_info:
-            local_version_path = ADDIN_DIR / VERSION_FILENAME
+            local_version_path = config.ADDIN_DIR / config.VERSION_FILENAME
             import json
             with open(local_version_path, "w", encoding="utf-8") as f:
                 json.dump(version_info, f, ensure_ascii=False, indent=2)
@@ -152,7 +152,7 @@ def get_installed_version() -> str:
         str: 版本号，未安装返回 '未安装'
     """
     import json
-    local_version_path = ADDIN_DIR / VERSION_FILENAME
+    local_version_path = config.ADDIN_DIR / config.VERSION_FILENAME
 
     if not local_version_path.exists():
         return "未安装"
