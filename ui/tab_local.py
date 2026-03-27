@@ -8,6 +8,8 @@ import customtkinter as ctk
 from tkinter import filedialog
 from typing import Callable
 
+from utils.config import config
+
 
 class LocalInstallTab(ctk.CTkFrame):
     """本地安装 Tab 页面"""
@@ -73,8 +75,14 @@ class LocalInstallTab(ctk.CTkFrame):
 
     def _on_browse(self):
         """浏览按钮点击事件"""
+        # 确保目录存在
+        addin_dir = str(config.ADDIN_DIR)
+        if not config.ADDIN_DIR.exists():
+            addin_dir = None  # 目录不存在时使用默认位置
+
         file_path = filedialog.askopenfilename(
             title="选择 Excel 加载项文件",
+            initialdir=addin_dir,
             filetypes=[("Excel 加载项", "*.xlam"), ("所有文件", "*.*")]
         )
 
