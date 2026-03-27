@@ -114,12 +114,34 @@ WebDAV 根目录/
 
 ### 常见问题
 
-| 现象 | 解决方法 |
-|------|----------|
-| 安装后 Excel 没有新标签页 | 完全关闭 Excel（含任务栏）后重新打开 |
-| 点击按钮提示找不到宏 | 重新运行 exe 再安装一次 |
-| 测试连接失败 | 确认当前网络可访问公司内网，检查地址是否正确 |
-| 更新后旧功能不见了 | 联系管理员，可能是新版 xlam 有问题 |
+| 现象 | 原因 | 解决方法 |
+|------|------|----------|
+| 安装后 Excel 没有新标签页 | Excel 未完全重启 | 完全关闭 Excel（含任务栏）后重新打开 |
+| 点击按钮提示"错误的参数号或无效的属性赋值" | VBA 函数签名不正确 | 函数必须包含 `control As IRibbonControl` 参数 |
+| 点击按钮提示找不到宏 | 加载项未正确加载 | 重新运行 exe 再安装一次 |
+| 修改 xlam 后代码被还原 | Excel 退出时覆盖文件 | 用 Excel 菜单"打开"方式编辑，而非双击文件 |
+| 测试连接失败 | 网络或地址问题 | 确认当前网络可访问公司内网，检查地址是否正确 |
+| 更新后旧功能不见了 | 新版 xlam 有问题 | 联系管理员 |
+
+> **重要**：所有 Ribbon 按钮回调函数必须包含 `IRibbonControl` 参数：
+> ```vba
+> ' 正确
+> Public Sub GenerateIndex(control As IRibbonControl)
+>     ' 代码
+> End Sub
+>
+> ' 错误
+> Public Sub GenerateIndex()
+>     ' 代码
+> End Sub
+> ```
+
+### 开发示例
+
+参见 `example/` 目录，包含：
+- `customUI14.xml` - Ribbon 工具栏定义示例
+- `RibbonCallbacks.bas` - VBA 回调函数模块示例
+- `README.md` - 开发指南
 
 ---
 

@@ -9,7 +9,13 @@
       "Bash(.venv/Scripts/python -c \"from main import App; print\\(''模块导入成功''\\)\")",
       "Bash(.venv/Scripts/python main.py)",
       "Bash(reg query:*)",
-      "Bash(findstr /i \"OPEN\")"
+      "Bash(findstr /i \"OPEN\")",
+      "Bash(dir:*)",
+      "Bash(python:*)",
+      "Bash(findstr /i \"E:\\\\工具\")",
+      "Bash(scripts/install_hook.bat)",
+      "Bash(cp hooks/pre-commit .git/hooks/pre-commit)",
+      "Bash(chmod +x .git/hooks/pre-commit)"
     ]
   }
 }
