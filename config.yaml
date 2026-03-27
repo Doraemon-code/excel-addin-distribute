@@ -1,0 +1,19 @@
+# 应用配置文件
+# 所有硬编码配置值统一放在此文件
+
+# WebDAV 默认配置（预留给用户填写，默认为空）
+webdav_default_url: ""
+webdav_default_user: ""
+webdav_default_pass: ""
+
+# 加载项配置
+xlam_filename: "MyAddin.xlam"
+version_filename: "version.json"
+
+# 应用信息
+app_title: "Excel 加载项安装工具"
+app_version: "1.0.0"
+
+# 窗口尺寸
+window_width: 680
+window_height: 560

@@ -1,0 +1,7 @@
+{
+  "xlam_path": "./MyAddin.xlam",
+  "export_dir": "./src/vba",
+  "export_format": "bas",
+  "include_metadata": true,
+  "auto_commit": false
+}

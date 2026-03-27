@@ -1,0 +1,89 @@
+#!/bin/sh
+# .git/hooks/pre-commit
+#
+# 在每次 git commit 前自动导出 xlam 中的 VBA 代码，
+# 并将导出的 .bas/.cls 文件加入本次提交。
+#
+# 安装方法：
+#   chmod +x .git/hooks/pre-commit
+#   （或运行 scripts/install_hook.sh 自动安装）
+
+echo "🔧 [pre-commit] 检查是否有 .xlam 文件变更..."
+
+# ──────────────────────────────────────────
+# 1. 判断本次暂存区是否包含 .xlam 文件
+# ──────────────────────────────────────────
+XLAM_CHANGED=$(git diff --cached --name-only | grep -i "\.xlam$")
+
+if [ -z "$XLAM_CHANGED" ]; then
+    echo "  ℹ️  暂存区无 .xlam 变更，跳过 VBA 导出"
+    exit 0
+fi
+
+echo "  📦 检测到 .xlam 变更："
+echo "$XLAM_CHANGED" | while read -r f; do echo "     - $f"; done
+
+# ──────────────────────────────────────────
+# 2. 检查 Python 和 oletools 是否可用
+# ──────────────────────────────────────────
+if ! command -v python3 >/dev/null 2>&1; then
+    # Windows 环境下尝试 python
+    if ! command -v python >/dev/null 2>&1; then
+        echo "  ❌ 未找到 Python，跳过 VBA 导出（请安装 Python 3）"
+        exit 0
+    fi
+    PYTHON="python"
+else
+    PYTHON="python3"
+fi
+
+$PYTHON -c "import oletools" 2>/dev/null
+if [ $? -ne 0 ]; then
+    echo "  ❌ 未安装 oletools，跳过导出（请运行：pip install oletools）"
+    exit 0
+fi
+
+# ──────────────────────────────────────────
+# 3. 对每个变更的 xlam 执行导出
+# ──────────────────────────────────────────
+REPO_ROOT=$(git rev-parse --show-toplevel)
+EXPORT_SCRIPT="$REPO_ROOT/scripts/export_vba.py"
+
+if [ ! -f "$EXPORT_SCRIPT" ]; then
+    echo "  ❌ 未找到导出脚本：$EXPORT_SCRIPT"
+    exit 0
+fi
+
+HAS_ERROR=0
+
+echo "$XLAM_CHANGED" | while read -r xlam_file; do
+    XLAM_FULLPATH="$REPO_ROOT/$xlam_file"
+
+    # 输出目录：src/vba/（若有多个 xlam 则按文件名区分子目录）
+    XLAM_BASENAME=$(basename "$xlam_file" .xlam)
+    OUTPUT_DIR="$REPO_ROOT/src/vba"
+
+    echo ""
+    echo "  🚀 导出：$xlam_file → $OUTPUT_DIR/"
+
+    $PYTHON "$EXPORT_SCRIPT" "$XLAM_FULLPATH" "$OUTPUT_DIR"
+
+    if [ $? -ne 0 ]; then
+        echo "  ❌ 导出失败：$xlam_file"
+        HAS_ERROR=1
+        continue
+    fi
+
+    # 将导出的文件加入暂存区
+    git add "$OUTPUT_DIR/"
+    echo "  ✅ 已将 $OUTPUT_DIR/ 加入本次提交"
+done
+
+if [ $HAS_ERROR -ne 0 ]; then
+    echo ""
+    echo "  ⚠️  部分导出失败，但不阻断提交。请检查上方错误信息。"
+fi
+
+echo ""
+echo "✅ [pre-commit] VBA 导出完成"
+exit 0
