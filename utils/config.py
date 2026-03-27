@@ -1,172 +1,106 @@
 # -*- coding: utf-8 -*-
 """
-配置加载模块
-从 config.yaml 加载配置并提供全局访问
-支持 PyInstaller 打包后读取内嵌的配置文件
+配置模块
+提供全局配置访问，默认配置内嵌在代码中
 """
 
 import os
 import sys
 from pathlib import Path
-from typing import Any, Optional
-
-import yaml
 
 
-# 配置文件路径
-_CONFIG_FILE: Optional[Path] = None
-_config: dict = {}
+# ==================== 内嵌默认配置 ====================
+# 打包后无需外部配置文件，配置直接嵌入代码
+
+DEFAULT_CONFIG = {
+    # WebDAV 默认配置
+    "webdav_default_url": "https://gima.teracloud.jp/dav/",
+    "webdav_default_user": "Dora_emon",
+    "webdav_default_pass": "Zj4vTQgVwi9EtGMm",
+    "webdav_default_folder": "Addin",
+
+    # 加载项配置
+    "xlam_filename": "MyAddin.xlam",
+    "version_filename": "version.json",
+
+    # 应用信息
+    "app_title": "Excel 加载项安装工具",
+    "app_version": "1.0.0",
+
+    # 窗口尺寸
+    "window_width": 680,
+    "window_height": 420,
+    "window_min_width": 600,
+    "window_min_height": 380,
+
+    # 字体配置
+    "font_family": "Microsoft YaHei UI",
+    "font_mono": "Consolas",
+}
 
 
-def get_base_path() -> Path:
-    """
-    获取基础路径
-    - 开发环境：项目根目录
-    - 打包后：exe 所在目录或 PyInstaller 临时目录
-    """
-    if getattr(sys, 'frozen', False):
-        # PyInstaller 打包后
-        # sys._MEIPASS 是 PyInstaller 解压的临时目录
-        # sys.executable 是 exe 文件路径
-        return Path(sys._MEIPASS)
-    else:
-        # 开发环境
-        return Path(__file__).parent.parent
-
-
-def get_config_path() -> Path:
-    """获取配置文件路径"""
-    global _CONFIG_FILE
-    if _CONFIG_FILE is None:
-        _CONFIG_FILE = get_base_path() / "config.yaml"
-    return _CONFIG_FILE
-
-
-def load_config() -> dict:
-    """加载配置文件"""
-    global _config
-
-    config_path = get_config_path()
-    if config_path.exists():
-        with open(config_path, "r", encoding="utf-8") as f:
-            _config = yaml.safe_load(f) or {}
-    else:
-        _config = {}
-
-    return _config
-
-
-def get(key: str, default: Any = None) -> Any:
-    """获取配置项"""
-    if not _config:
-        load_config()
-    return _config.get(key, default)
-
-
-# ==================== 常用配置属性 ====================
-
-def _get_app_title() -> str:
-    return get("app_title", "Excel 加载项安装工具")
-
-def _get_app_version() -> str:
-    return get("app_version", "1.0.0")
-
-def _get_xlam_filename() -> str:
-    return get("xlam_filename", "MyAddin.xlam")
-
-def _get_version_filename() -> str:
-    return get("version_filename", "version.json")
-
-def _get_window_width() -> int:
-    return get("window_width", 680)
-
-def _get_window_height() -> int:
-    return get("window_height", 560)
-
-def _get_window_min_width() -> int:
-    return get("window_min_width", 600)
-
-def _get_window_min_height() -> int:
-    return get("window_min_height", 500)
-
-def _get_font_family() -> str:
-    return get("font_family", "Microsoft YaHei UI")
-
-def _get_font_mono() -> str:
-    return get("font_mono", "Consolas")
-
-def _get_webdav_url() -> str:
-    return get("webdav_default_url", "")
-
-def _get_webdav_user() -> str:
-    return get("webdav_default_user", "")
-
-def _get_webdav_pass() -> str:
-    return get("webdav_default_pass", "")
-
-def _get_webdav_folder() -> str:
-    return get("webdav_default_folder", "")
-
-
-# 导出配置常量（延迟加载）
 class Config:
-    """配置类，提供延迟加载的配置属性"""
+    """配置类，提供内嵌配置访问"""
+
+    def _get(self, key: str, default=None):
+        """获取配置项（优先从默认配置）"""
+        return DEFAULT_CONFIG.get(key, default)
 
     @property
     def APP_TITLE(self) -> str:
-        return _get_app_title()
+        return self._get("app_title", "Excel 加载项安装工具")
 
     @property
     def APP_VERSION(self) -> str:
-        return _get_app_version()
+        return self._get("app_version", "1.0.0")
 
     @property
     def XLAM_FILENAME(self) -> str:
-        return _get_xlam_filename()
+        return self._get("xlam_filename", "MyAddin.xlam")
 
     @property
     def VERSION_FILENAME(self) -> str:
-        return _get_version_filename()
+        return self._get("version_filename", "version.json")
 
     @property
     def WINDOW_WIDTH(self) -> int:
-        return _get_window_width()
+        return self._get("window_width", 680)
 
     @property
     def WINDOW_HEIGHT(self) -> int:
-        return _get_window_height()
+        return self._get("window_height", 420)
 
     @property
     def WINDOW_MIN_WIDTH(self) -> int:
-        return _get_window_min_width()
+        return self._get("window_min_width", 600)
 
     @property
     def WINDOW_MIN_HEIGHT(self) -> int:
-        return _get_window_min_height()
+        return self._get("window_min_height", 380)
 
     @property
     def FONT_FAMILY(self) -> str:
-        return _get_font_family()
+        return self._get("font_family", "Microsoft YaHei UI")
 
     @property
     def FONT_MONO(self) -> str:
-        return _get_font_mono()
+        return self._get("font_mono", "Consolas")
 
     @property
     def WEBDAV_DEFAULT_URL(self) -> str:
-        return _get_webdav_url()
+        return self._get("webdav_default_url", "")
 
     @property
     def WEBDAV_DEFAULT_USER(self) -> str:
-        return _get_webdav_user()
+        return self._get("webdav_default_user", "")
 
     @property
     def WEBDAV_DEFAULT_PASS(self) -> str:
-        return _get_webdav_pass()
+        return self._get("webdav_default_pass", "")
 
     @property
     def WEBDAV_DEFAULT_FOLDER(self) -> str:
-        return _get_webdav_folder()
+        return self._get("webdav_default_folder", "")
 
     @property
     def ADDIN_DIR(self) -> Path:

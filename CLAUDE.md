@@ -6,136 +6,106 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Excel 加载项部署工具 —— 用于自动部署和更新 Excel 加载项（.xlam 文件）的 Windows 桌面工具，包含 Git Hooks 实现 VBA 代码版本管理。
 
-## 项目结构
-
-```
-.
-├── main.py                  # 入口文件
-├── config.yaml              # 配置文件
-├── ui/
-│   ├── app.py               # 主窗口
-│   ├── tab_remote.py        # 远程安装 Tab
-│   └── tab_local.py         # 本地安装 Tab
-├── core/
-│   ├── deployer.py          # 核心部署逻辑
-│   ├── webdav_client.py     # WebDAV 客户端
-│   └── version.py           # 版本比较
-├── utils/
-│   └── config.py            # 配置加载模块
-├── hooks/
-│   ├── pre-commit           # Git 提交前钩子
-│   └── hooks-config.json    # 钩子配置
-├── scripts/
-│   ├── export_vba.py        # VBA 代码导出工具
-│   ├── install_hook.sh      # Unix 版 hook 安装脚本
-│   └── install_hook.bat     # Windows 版 hook 安装脚本
-├── example/                 # 开发示例
-│   ├── customUI14.xml       # Ribbon 定义示例
-│   └── RibbonCallbacks.bas  # VBA 回调函数示例
-└── src/vba/                 # VBA 代码导出目录（自动生成）
-```
-
-## 核心功能
-
-### 1. Excel 加载项安装工具（已实现）
-
-技术栈：
-- UI: customtkinter
-- WebDAV: webdavclient3
-- HTTP: requests
-- 打包：PyInstaller
-
-功能：
-- 远程安装（WebDAV 下载）
-- 本地安装（文件选择，默认定位到 Addin 文件夹）
-- 版本检测与更新
-- Office 注册表配置
-
-配置文件：`config.yaml`
-
-### 2. VBA 代码版本管理（已实现）
-
-使用 Git Hooks 在 `git commit` 前自动导出 xlam 文件中的 VBA 代码到文本文件，实现代码版本追踪。
-
-**工作流程：**
-```
-git add MyAddin.xlam → git commit → pre-commit 触发 → 导出 .bas/.cls 文件 → 自动加入暂存区
-```
-
-**依赖：** `pip install oletools`
-
 ## 常用命令
 
-### Hook 安装
+### 运行与开发
 
 ```bash
+# 创建虚拟环境
+python -m venv .venv
+.venv\Scripts\activate
+
+# 安装依赖
+pip install -r requirements.txt
+
+# 运行程序
+python main.py
+```
+
+### 打包
+
+```bash
+pyinstaller --onefile --windowed \
+  --name ExcelAddinInstaller \
+  --icon app.ico \
+  --add-data "config.yaml;." \
+  main.py
+```
+
+### Git Hooks（VBA 版本管理）
+
+```bash
+# Windows
+scripts\install_hook.bat
+
 # Unix/Linux/macOS
 sh scripts/install_hook.sh
 
-# Windows
-scripts\install_hook.bat
+# 手动导出 VBA 代码
+python scripts/export_vba.py                     # 自动查找 .xlam
+python scripts/export_vba.py MyAddin.xlam        # 指定文件
+python scripts/export_vba.py MyAddin.xlam src/vba  # 指定输出目录
 ```
 
-### 手动导出 VBA 代码
+## 架构
 
-```bash
-# 自动查找根目录下的 .xlam 文件
-python scripts/export_vba.py
+```
+main.py ──→ ui/app.py (主窗口)
+              ├── ui/tab_remote.py (远程安装 Tab)
+              └── ui/tab_local.py (本地安装 Tab)
 
-# 指定 xlam 文件路径
-python scripts/export_vba.py MyAddin.xlam
+core/
+├── deployer.py    # 核心部署：复制文件 + 注册表配置
+├── webdav_client.py  # WebDAV 文件下载
+└── version.py     # 版本读取与比较
 
-# 指定输出目录
-python scripts/export_vba.py MyAddin.xlam src/vba
+utils/config.py   # 配置加载（支持 PyInstaller 内嵌）
 ```
 
-### 检查 VBA 导出状态
+### 关键设计
 
-```bash
-# 查看已导出的模块
-ls src/vba/
+1. **配置分离**：
+   - `config.yaml`：内嵌配置（打包后不可见），包含 WebDAV 默认值
+   - `%APPDATA%\ExcelAddinInstaller\config.json`：用户配置，优先级更高
 
-# 查看导出清单
-cat src/vba/manifest.txt
-```
+2. **部署流程**（`core/deployer.py`）：
+   - 目标目录：`%APPDATA%\Microsoft\AddIns`
+   - 备份原文件 → 写入新文件 → 注册表配置 → 保存 version.json
 
-## 配置说明
+3. **UI 线程模型**：
+   - 所有网络/IO 操作在后台线程执行
+   - 使用 `self.after(0, callback)` 回调主线程更新 UI
+
+4. **PyInstaller 支持**：
+   - `utils/config.py` 的 `get_base_path()` 检测打包环境
+   - 打包后从 `sys._MEIPASS` 读取内嵌的 `config.yaml`
+
+## 配置
 
 ### config.yaml
-
-所有配置统一在 `config.yaml` 中管理：
 
 ```yaml
 webdav_default_url: ""
 webdav_default_user: ""
 webdav_default_pass: ""
+webdav_default_folder: "Addin"
 xlam_filename: "MyAddin.xlam"
 version_filename: "version.json"
 app_title: "Excel 加载项安装工具"
 app_version: "1.0.0"
 window_width: 680
-window_height: 560
+window_height: 420
+font_family: "Microsoft YaHei UI"
 ```
 
-通过 `utils/config.py` 加载，提供 `config` 对象访问配置。
+### export_vba.py
 
-### export_vba.py 配置
-
-- `SKIP_MODULES`: 内置模块黑名单（`ThisWorkbook`, `Sheet` 开头）
-- `EXT_MAP`: VBA 模块类型 → 文件扩展名映射（`.bas`, `.cls`, `.frm`）
-- 默认输出目录：`src/vba/`
+- `SKIP_MODULES`：跳过 `ThisWorkbook` 和 `Sheet` 开头的内置模块
+- `EXT_MAP`：VBA 模块类型 → 文件扩展名映射
+- 输出目录：`src/vba/`
 
 ### pre-commit hook
 
-- 仅当暂存区包含 `.xlam` 文件变更时触发
-- 导出失败不阻断提交，仅输出警告
+- 仅当暂存区包含 `.xlam` 文件时触发
+- 导出失败仅警告，不阻断提交
 - 导出文件自动 `git add`
-
-## 文件说明
-
-| 文件 | 用途 |
-|------|------|
-| `hooks/pre-commit` | Git 钩子，调用 export_vba.py |
-| `scripts/export_vba.py` | 使用 oletools 解析 xlam 并导出 VBA 代码 |
-| `scripts/install_hook.sh` | Unix 版 hook 安装脚本 |
-| `scripts/install_hook.bat` | Windows 版 hook 安装脚本 |
