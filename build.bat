@@ -1,37 +1,37 @@
-@echo off
-chcp 65001 >nul
+﻿@echo off
+chcp 65001 >/dev/null
 echo ========================================
-echo   Excel 加载项安装工具 - 打包脚本
+echo   Excel Addin Installer - Build Script
 echo ========================================
 echo.
 
-:: 检查虚拟环境
+:: Check virtual environment
 if not exist ".venv\Scripts\activate.bat" (
-    echo [错误] 未找到虚拟环境，请先运行: python -m venv .venv
+    echo [Error] Virtual environment not found. Run: python -m venv .venv
     pause
     exit /b 1
 )
 
-:: 激活虚拟环境
+:: Activate virtual environment
 call .venv\Scripts\activate.bat
 
-:: 检查 PyInstaller
-python -c "import PyInstaller" 2>nul
+:: Check PyInstaller
+python -c "import PyInstaller" 2>/dev/null
 if errorlevel 1 (
-    echo [安装] 正在安装 PyInstaller...
+    echo [Install] Installing PyInstaller...
     pip install pyinstaller
 )
 
-:: 清理旧文件
+:: Clean old files
 if exist "dist" rd /s /q "dist"
 if exist "build" rd /s /q "build"
 if exist "*.spec" del /q "*.spec"
 
 echo.
-echo [打包] 正在构建可执行文件...
+echo [Build] Creating executable...
 echo.
 
-:: 打包命令（配置已内嵌，无需外部文件）
+:: Build (config embedded, no external files needed)
 pyinstaller --onefile --windowed ^
     --name "ExcelAddinInstaller" ^
     --distpath "dist" ^
@@ -40,19 +40,19 @@ pyinstaller --onefile --windowed ^
 
 if errorlevel 1 (
     echo.
-    echo [失败] 打包过程中出现错误
+    echo [Failed] Build error occurred
     pause
     exit /b 1
 )
 
 echo.
 echo ========================================
-echo   打包完成！
-echo   输出文件: dist\ExcelAddinInstaller.exe
+echo   Build completed!
+echo   Output: dist\ExcelAddinInstaller.exe
 echo ========================================
 echo.
 
-:: 打开输出目录
+:: Open output directory
 explorer "dist"
 
 pause

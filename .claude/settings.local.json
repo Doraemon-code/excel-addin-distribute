@@ -15,7 +15,15 @@
       "Bash(findstr /i \"E:\\\\工具\")",
       "Bash(scripts/install_hook.bat)",
       "Bash(cp hooks/pre-commit .git/hooks/pre-commit)",
-      "Bash(chmod +x .git/hooks/pre-commit)"
+      "Bash(chmod +x .git/hooks/pre-commit)",
+      "Bash(.venv/Scripts/python.exe main.py)",
+      "Bash(.venv/Scripts/python.exe -c \"from utils.config import config; print\\(f'Title: {config.APP_TITLE}'\\); print\\(f'Version: {config.APP_VERSION}'\\); print\\(f'WebDAV URL: {config.WEBDAV_DEFAULT_URL}'\\)\")",
+      "Bash(grep -rh \"^import\\\\|^from\" E:/git/XIAODINGDANGDANG/main.py E:/git/XIAODINGDANGDANG/ui/*.py E:/git/XIAODINGDANGDANG/core/*.py E:/git/XIAODINGDANGDANG/utils/*.py E:/git/XIAODINGDANGDANG/scripts/*.py)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(printf '\\\\xEF\\\\xBB\\\\xBF')",
+      "Bash(build.bat.tmp:*)",
+      "Bash(mv build.bat.tmp build.bat)"
     ]
   }
 }
