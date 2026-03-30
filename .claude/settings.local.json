@@ -23,7 +23,12 @@
       "Bash(git commit:*)",
       "Bash(printf '\\\\xEF\\\\xBB\\\\xBF')",
       "Bash(build.bat.tmp:*)",
-      "Bash(mv build.bat.tmp build.bat)"
+      "Bash(mv build.bat.tmp build.bat)",
+      "Bash(find . -type f -name *.py ! -path ./.venv/* ! -path ./.git/* ! -path ./build/* ! -path ./dist/* -exec md5sum {})",
+      "Bash(2)",
+      "Bash(uniq -w32 -D)",
+      "Bash(rm -rf src/vba)",
+      "Bash(rmdir src:*)"
     ]
   }
 }

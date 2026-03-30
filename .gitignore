@@ -56,4 +56,5 @@ Thumbs.db
 *.log
 
 # Build output
-ExcelAddinInstaller.exe
+.claude/
+config.py

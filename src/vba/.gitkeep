@@ -1,0 +1,4 @@
+# 此目录用于存放从 .xlam 文件导出的 VBA 代码
+# Git Hooks (pre-commit) 会自动将 VBA 模块导出到这里
+# This directory stores VBA code exported from .xlam files
+# Git Hooks (pre-commit) automatically exports VBA modules here
