@@ -20,7 +20,8 @@ DEFAULT_CONFIG = {
     "webdav_default_folder": "Addin",
 
     # 加载项配置
-    "xlam_filename": "MyAddin.xlam",
+    "xlam_filename": "MyAddin.xlam",        # 远程/源文件名（下载用）
+    "deploy_xlam_filename": "Addin.xlam",    # 部署文件名（系统目录用）
     "version_filename": "version.json",
 
     # 应用信息
@@ -57,6 +58,10 @@ class Config:
     @property
     def XLAM_FILENAME(self) -> str:
         return self._get("xlam_filename", "MyAddin.xlam")
+
+    @property
+    def DEPLOY_XLAM_FILENAME(self) -> str:
+        return self._get("deploy_xlam_filename", "Addin.xlam")
 
     @property
     def VERSION_FILENAME(self) -> str:
@@ -108,7 +113,7 @@ class Config:
 
     @property
     def TARGET_PATH(self) -> Path:
-        return self.ADDIN_DIR / self.XLAM_FILENAME
+        return self.ADDIN_DIR / self.DEPLOY_XLAM_FILENAME
 
     @property
     def USER_CONFIG_DIR(self) -> Path:

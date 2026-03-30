@@ -89,7 +89,8 @@ webdav_default_url: ""
 webdav_default_user: ""
 webdav_default_pass: ""
 webdav_default_folder: "Addin"
-xlam_filename: "MyAddin.xlam"
+xlam_filename: "MyAddin.xlam"        # 远程/源文件名（WebDAV 下载用）
+deploy_xlam_filename: "Addin.xlam"   # 部署文件名（系统目录用，避免同名冲突）
 version_filename: "version.json"
 app_title: "Excel 加载项安装工具"
 app_version: "1.0.0"
