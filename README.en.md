@@ -127,7 +127,6 @@ python main.py
 pyinstaller --onefile --windowed \
   --name ExcelAddinInstaller \
   --icon icon/app.ico \
-  --add-data "config.yaml;." \
   main.py
 ```
 

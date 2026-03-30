@@ -1,25 +1,16 @@
-﻿@echo off
-chcp 65001 >/dev/null
+@echo off
+chcp 65001 >nul
 echo ========================================
 echo   Excel Addin Installer - Build Script
 echo ========================================
 echo.
 
 :: Check virtual environment
-if not exist ".venv\Scripts\activate.bat" (
-    echo [Error] Virtual environment not found. Run: python -m venv .venv
+if not exist ".venv\Scripts\pyinstaller.exe" (
+    echo [Error] PyInstaller not found in .venv
+    echo [Info] Please run: pip install -r requirements.txt
     pause
     exit /b 1
-)
-
-:: Activate virtual environment
-call .venv\Scripts\activate.bat
-
-:: Check PyInstaller
-python -c "import PyInstaller" 2>/dev/null
-if errorlevel 1 (
-    echo [Install] Installing PyInstaller...
-    pip install pyinstaller
 )
 
 :: Clean old files
@@ -32,8 +23,9 @@ echo [Build] Creating executable...
 echo.
 
 :: Build (config embedded, no external files needed)
-pyinstaller --onefile --windowed ^
+.venv\Scripts\pyinstaller.exe --onefile --windowed ^
     --name "ExcelAddinInstaller" ^
+    --icon "icon\app.ico" ^
     --distpath "dist" ^
     --workpath "build" ^
     main.py
