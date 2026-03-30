@@ -2,6 +2,10 @@
 """
 配置模块
 提供全局配置访问，默认配置内嵌在代码中
+
+使用方法：
+1. 复制此文件为 config.py
+2. 填入你的 WebDAV 配置信息
 """
 
 import os
@@ -13,10 +17,10 @@ from pathlib import Path
 # 打包后无需外部配置文件，配置直接嵌入代码
 
 DEFAULT_CONFIG = {
-    # WebDAV 默认配置
-    "webdav_default_url": "https://gima.teracloud.jp/dav/",
-    "webdav_default_user": "Dora_emon",
-    "webdav_default_pass": "Zj4vTQgVwi9EtGMm",
+    # WebDAV 默认配置（请填入你的配置）
+    "webdav_default_url": "https://your-webdav-server.com/dav/",
+    "webdav_default_user": "your_username",
+    "webdav_default_pass": "your_password",
     "webdav_default_folder": "Addin",
 
     # 加载项配置
