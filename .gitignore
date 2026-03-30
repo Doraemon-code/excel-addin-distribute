@@ -58,3 +58,4 @@ Thumbs.db
 # Build output
 .claude/
 config.py
+claude.md
