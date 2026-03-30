@@ -28,7 +28,14 @@
       "Bash(2)",
       "Bash(uniq -w32 -D)",
       "Bash(rm -rf src/vba)",
-      "Bash(rmdir src:*)"
+      "Bash(rmdir src:*)",
+      "Bash(git remote:*)",
+      "Bash(git push:*)",
+      "Bash(git config:*)",
+      "Bash(mkdir -p ~/.ssh)",
+      "Bash(ssh-keyscan github.com)",
+      "Bash(~/.ssh/known_hosts)",
+      "Bash(ssh-keygen:*)"
     ]
   }
 }
