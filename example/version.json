@@ -1,6 +1,6 @@
 {
-  "version": "1.0.2",
-  "releaseDate": "2026-03-30",
+  "version": "1.0.3",
+  "releaseDate": "2026-04-01",
   "filename": "MyAddin.xlam",
-  "changelog": "离群值标记"
+  "changelog": "增加根据受试者筛选号列表来抽取指定受试者数据的功能"
 }

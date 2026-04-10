@@ -13,6 +13,7 @@ import customtkinter as ctk
 
 from utils.config import config
 from core.webdav_client import WebDAVClient
+from ui.proxy_dialog import ProxyDialog
 
 
 class RemoteInstallTab(ctk.CTkFrame):
@@ -40,6 +41,16 @@ class RemoteInstallTab(ctk.CTkFrame):
         self._version_update = version_update_callback
         self.webdav_client: Optional[WebDAVClient] = None
         self.remote_version_info: Optional[dict] = None
+
+        # 代理配置
+        self.proxy_config: dict = {
+            "proxy_enabled": config.PROXY_ENABLED,
+            "proxy_type": config.PROXY_TYPE,
+            "proxy_host": config.PROXY_HOST,
+            "proxy_port": config.PROXY_PORT,
+            "proxy_user": config.PROXY_USER,
+            "proxy_pass": config.PROXY_PASS,
+        }
 
         self._create_widgets()
         self._load_user_config()
@@ -92,6 +103,12 @@ class RemoteInstallTab(ctk.CTkFrame):
             font=(config.FONT_FAMILY, 11), command=self._on_test_connection
         )
         self.test_btn.pack(side="left")
+
+        self.proxy_btn = ctk.CTkButton(
+            btn_frame, text="⚙️ 代理", width=80, height=28,
+            font=(config.FONT_FAMILY, 11), command=self._on_proxy_settings
+        )
+        self.proxy_btn.pack(side="left", padx=(5, 0))
 
         self.status_label = ctk.CTkLabel(btn_frame, text="", text_color="gray", font=(config.FONT_FAMILY, 11))
         self.status_label.pack(side="left", padx=10)
@@ -163,6 +180,14 @@ class RemoteInstallTab(ctk.CTkFrame):
                 elif config.WEBDAV_DEFAULT_PASS:
                     self.pass_entry.insert(0, config.WEBDAV_DEFAULT_PASS)
 
+                # 加载代理配置
+                self.proxy_config["proxy_enabled"] = saved_config.get("proxy_enabled", config.PROXY_ENABLED)
+                self.proxy_config["proxy_type"] = saved_config.get("proxy_type", config.PROXY_TYPE)
+                self.proxy_config["proxy_host"] = saved_config.get("proxy_host", config.PROXY_HOST)
+                self.proxy_config["proxy_port"] = saved_config.get("proxy_port", config.PROXY_PORT)
+                self.proxy_config["proxy_user"] = saved_config.get("proxy_user", config.PROXY_USER)
+                self.proxy_config["proxy_pass"] = saved_config.get("proxy_pass", config.PROXY_PASS)
+
             except Exception:
                 pass
         else:
@@ -178,7 +203,13 @@ class RemoteInstallTab(ctk.CTkFrame):
         saved_config = {
             "webdav_url": self.url_entry.get(),
             "webdav_user": self.user_entry.get(),
-            "webdav_pass": self.pass_entry.get()
+            "webdav_pass": self.pass_entry.get(),
+            "proxy_enabled": self.proxy_config["proxy_enabled"],
+            "proxy_type": self.proxy_config["proxy_type"],
+            "proxy_host": self.proxy_config["proxy_host"],
+            "proxy_port": self.proxy_config["proxy_port"],
+            "proxy_user": self.proxy_config["proxy_user"],
+            "proxy_pass": self.proxy_config["proxy_pass"],
         }
 
         config.USER_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
@@ -189,6 +220,16 @@ class RemoteInstallTab(ctk.CTkFrame):
         """保存配置按钮点击"""
         self._save_user_config()
         self.status_label.configure(text="✅ 已保存", text_color="green")
+
+    def _on_proxy_settings(self):
+        """代理设置按钮点击"""
+        def on_save(result):
+            if result:
+                self.proxy_config = result
+                self._save_user_config()
+                self.status_label.configure(text="✅ 代理已保存", text_color="green")
+
+        ProxyDialog(self, on_save_callback=on_save)
 
     def _on_test_connection(self):
         """测试连接按钮点击"""
@@ -206,7 +247,8 @@ class RemoteInstallTab(ctk.CTkFrame):
 
         def test():
             try:
-                client = WebDAVClient(url, user, password, folder)
+                proxy = self.proxy_config if self.proxy_config.get("proxy_enabled") else None
+                client = WebDAVClient(url, user, password, folder, proxy_config=proxy)
                 success, msg = client.test_connection()
 
                 if success:

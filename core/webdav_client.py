@@ -5,6 +5,7 @@ WebDAV 客户端模块
 """
 
 import json
+import requests
 from io import BytesIO
 from typing import Callable, Optional, Tuple
 
@@ -16,7 +17,14 @@ from utils.config import config
 class WebDAVClient:
     """WebDAV 客户端封装类"""
 
-    def __init__(self, url: str, username: str, password: str, folder: str = ""):
+    def __init__(
+        self,
+        url: str,
+        username: str,
+        password: str,
+        folder: str = "",
+        proxy_config: Optional[dict] = None
+    ):
         """
         初始化 WebDAV 客户端
 
@@ -25,14 +33,48 @@ class WebDAVClient:
             username: 用户名
             password: 密码
             folder: 文件夹名称（可选）
+            proxy_config: 代理配置（可选）
         """
         self.options = {
             'webdav_hostname': url,
             'webdav_login': username,
             'webdav_password': password
         }
+
+        # 配置代理
+        if proxy_config and proxy_config.get("proxy_enabled"):
+            session = requests.Session()
+            proxy_url = self._build_proxy_url(proxy_config)
+            session.proxies = {"http": proxy_url, "https": proxy_url}
+            self.options["session"] = session
+
         self.client = Client(self.options)
         self.folder = folder.rstrip('/') if folder else ""
+
+    def _build_proxy_url(self, proxy_config: dict) -> str:
+        """
+        构建代理 URL
+
+        Args:
+            proxy_config: 代理配置字典
+
+        Returns:
+            str: 代理 URL（如 http://user:pass@host:port 或 socks5://host:port）
+        """
+        proxy_type = proxy_config.get("proxy_type", "http")
+        host = proxy_config.get("proxy_host", "")
+        port = proxy_config.get("proxy_port", 10810)
+        user = proxy_config.get("proxy_user", "")
+        password = proxy_config.get("proxy_pass", "")
+
+        # 构建认证部分
+        auth = ""
+        if user and password:
+            auth = f"{user}:{password}@"
+        elif user:
+            auth = f"{user}@"
+
+        return f"{proxy_type}://{auth}{host}:{port}"
 
     def _get_remote_path(self, filename: str) -> str:
         """
